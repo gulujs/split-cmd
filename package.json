@@ -1,0 +1,30 @@
+{
+  "name": "@lunjs/split-cmd",
+  "version": "0.0.1",
+  "description": "split a command into an array, like process.argv",
+  "main": "index.js",
+  "typings": "index.d.ts",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lunjs/split-cmd.git"
+  },
+  "author": "jKey Lu <jkeylu@gmail.com> (https://github.com/jkeylu)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lunjs/split-cmd/issues"
+  },
+  "homepage": "https://github.com/lunjs/split-cmd#readme",
+  "keywords": [
+    "split",
+    "command",
+    "argument",
+    "args",
+    "child_process",
+    "spawn",
+    "process",
+    "argv"
+  ]
+}
