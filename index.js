@@ -5,10 +5,14 @@ function splitCmd(str, options) {
     argv: [],
     arg: '',
     caputring: false,
-    startOfDoubleQuotes: false,
-    endOfDoubleQuotes: false,
-    startOfSingleQuotes: false,
-    endOfSingleQuotes: false,
+    doubleQuotes: {
+      start: false,
+      end: false
+    },
+    singleQuotes: {
+      start: false,
+      end: false
+    },
     backslash: false,
     keepQuotes: options.keepQuotes === true
   };
@@ -47,6 +51,22 @@ function splitCmd(str, options) {
   return s.argv;
 }
 
+/**
+ * @typedef State
+ * @property {string[]} argv
+ * @property {string} arg
+ * @property {boolean} caputring
+ * @property {{start: boolean; end: boolean;}} doubleQuotes
+ * @property {{start: boolean; end: boolean;}} singleQuotes
+ * @property {boolean} backslash
+ * @property {boolean} keepQuotes
+ */
+
+/**
+ *
+ * @param {State} s
+ * @param {string} c
+ */
 function handleBackwardSlash(s, c) {
   if (!s.caputring) {
     if (s.backslash) {
@@ -56,9 +76,9 @@ function handleBackwardSlash(s, c) {
     return;
   }
 
-  if (s.startOfDoubleQuotes) {
-    if (s.endOfDoubleQuotes) {
-      resetQuoteState(s, 'Double');
+  if (s.doubleQuotes.start) {
+    if (s.doubleQuotes.end) {
+      resetQuoteState(s, 'doubleQuotes');
       s.backslash = true;
     } else {
       eatBackslash(s, c);
@@ -66,9 +86,9 @@ function handleBackwardSlash(s, c) {
     return;
   }
 
-  if (s.startOfSingleQuotes) {
-    if (s.endOfSingleQuotes) {
-      resetQuoteState(s, 'Single');
+  if (s.singleQuotes.start) {
+    if (s.singleQuotes.end) {
+      resetQuoteState(s, 'singleQuotes');
       s.backslash = true;
     } else {
       s.arg += c;
@@ -78,6 +98,11 @@ function handleBackwardSlash(s, c) {
 
   eatBackslash(s, c);
 }
+/**
+ *
+ * @param {State} s
+ * @param {string} c
+ */
 function handleSpace(s, c) {
   if (!s.caputring) {
     if (s.backslash) {
@@ -89,8 +114,8 @@ function handleSpace(s, c) {
   }
 
   if (
-    (s.endOfDoubleQuotes || s.endOfSingleQuotes)
-    || (!s.backslash && !s.startOfDoubleQuotes && !s.startOfSingleQuotes)
+    (s.doubleQuotes.end || s.singleQuotes.end)
+    || (!s.backslash && !s.doubleQuotes.start && !s.singleQuotes.start)
   ) {
     reapArg(s);
     return;
@@ -98,54 +123,64 @@ function handleSpace(s, c) {
 
   eatChar(s, c);
 }
+/**
+ *
+ * @param {State} s
+ * @param {string} c
+ */
 function handleDoubleQuote(s, c) {
   if (!s.caputring) {
     s.caputring = true;
-    eatDoubleQuote(s, c, 'start');
+    eatQuote(s, c, 'doubleQuotes', 'start');
     return;
   }
 
-  if (s.startOfSingleQuotes) {
-    if (s.endOfSingleQuotes) {
-      resetAndEatQuote(s, c, 'Single', 'Double');
+  if (s.singleQuotes.start) {
+    if (s.singleQuotes.end) {
+      resetAndEatQuote(s, c, 'singleQuotes', 'doubleQuotes');
     } else {
       s.arg += c;
     }
     return;
   }
 
-  if (s.startOfDoubleQuotes) {
-    if (s.endOfDoubleQuotes) {
-      resetAndEatQuote(s, c, 'Double', 'Double');
+  if (s.doubleQuotes.start) {
+    if (s.doubleQuotes.end) {
+      resetAndEatQuote(s, c, 'doubleQuotes', 'doubleQuotes');
     } else {
-      eatDoubleQuote(s, c, 'end');
+      eatQuote(s, c, 'doubleQuotes', 'end');
     }
     return;
   }
 
-  eatDoubleQuote(s, c, 'start');
+  eatQuote(s, c, 'doubleQuotes', 'start');
 }
+/**
+ *
+ * @param {State} s
+ * @param {string} c
+ */
 function handleSingleQuote(s, c) {
   if (!s.caputring) {
     s.caputring = true;
-    eatStartOfSingleQuote(s, c);
+    eatQuote(s, c, 'singleQuotes', 'start');
     return;
   }
 
-  if (s.startOfDoubleQuotes) {
-    if (s.endOfDoubleQuotes) {
-      resetAndEatQuote(s, c, 'Double', 'Single');
+  if (s.doubleQuotes.start) {
+    if (s.doubleQuotes.end) {
+      resetAndEatQuote(s, c, 'doubleQuotes', 'singleQuotes');
     } else {
       s.arg += c;
     }
     return;
   }
 
-  if (s.startOfSingleQuotes) {
-    if (s.endOfSingleQuotes) {
-      resetAndEatQuote(s, c, 'Single', 'Single');
+  if (s.singleQuotes.start) {
+    if (s.singleQuotes.end) {
+      resetAndEatQuote(s, c, 'singleQuotes', 'singleQuotes');
     } else {
-      s.endOfSingleQuotes = true;
+      s.singleQuotes.end = true;
       if (s.keepQuotes) {
         s.arg += c;
       }
@@ -153,8 +188,13 @@ function handleSingleQuote(s, c) {
     return;
   }
 
-  eatStartOfSingleQuote(s, c);
+  eatQuote(s, c, 'singleQuotes', 'start');
 }
+/**
+ *
+ * @param {State} s
+ * @param {string} c
+ */
 function handleLineFeed(s, c) {
   if (!s.caputring) {
     if (s.backslash) {
@@ -170,11 +210,21 @@ function handleLineFeed(s, c) {
   }
 }
 
+/**
+ *
+ * @param {State} s
+ * @param {'doubleQuotes'|'singleQuotes'} type
+ */
 function resetQuoteState(s, type) {
-  s[`startOf${type}Quotes`] = false;
-  s[`endOf${type}Quotes`] = false;
+  s[type].start = false;
+  s[type].end = false;
 }
 
+/**
+ *
+ * @param {State} s
+ * @param {string} c
+ */
 function eatBackslash(s, c) {
   if (s.backslash) {
     s.arg += c;
@@ -182,16 +232,23 @@ function eatBackslash(s, c) {
   s.backslash = !s.backslash;
 }
 
+/**
+ *
+ * @param {State} s
+ */
 function reapArg(s) {
   s.argv.push(s.arg);
   s.arg = '';
   s.caputring = false;
-  s.startOfDoubleQuotes = false;
-  s.endOfDoubleQuotes = false;
-  s.startOfSingleQuotes = false;
-  s.endOfSingleQuotes = false;
+  resetQuoteState(s, 'doubleQuotes');
+  resetQuoteState(s, 'singleQuotes');
 }
 
+/**
+ *
+ * @param {State} s
+ * @param {string} c
+ */
 function eatChar(s, c) {
   if (s.backslash) {
     s.backslash = false;
@@ -200,7 +257,14 @@ function eatChar(s, c) {
   s.arg += c;
 }
 
-function eatDoubleQuote(s, c, position) {
+/**
+ *
+ * @param {State} s
+ * @param {string} c
+ * @param {'doubleQuotes'|'singleQuotes'} type
+ * @param {'start'|'end'} position
+ */
+function eatQuote(s, c, type, position) {
   if (s.backslash) {
     s.backslash = false;
     if (s.keepQuotes) {
@@ -209,32 +273,23 @@ function eatDoubleQuote(s, c, position) {
       s.arg += c;
     }
   } else {
-    s[`${position}OfDoubleQuotes`] = true;
+    s[type][position] = true;
     if (s.keepQuotes) {
       s.arg += c;
     }
   }
 }
 
-function eatStartOfSingleQuote(s, c) {
-  if (s.backslash) {
-    s.backslash = false;
-    if (s.keepQuotes) {
-      s.arg += '\\' + c;
-    } else {
-      s.arg += c;
-    }
-  } else {
-    s.startOfSingleQuotes = true;
-    if (s.keepQuotes) {
-      s.arg += c;
-    }
-  }
-}
-
+/**
+ *
+ * @param {State} s
+ * @param {string} c
+ * @param {'doubleQuotes'|'singleQuotes'} resetType
+ * @param {'doubleQuotes'|'singleQuotes'} eatType
+ */
 function resetAndEatQuote(s, c, resetType, eatType) {
   resetQuoteState(s, resetType);
-  s[`startOf${eatType}Quotes`] = true;
+  s[eatType].start = true;
   if (s.keepQuotes) {
     s.arg += c;
   }
