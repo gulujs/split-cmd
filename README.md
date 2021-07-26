@@ -25,4 +25,4 @@ console.log(splitCmd(command));
 
 ## License
 
-- [MIT](https://github.com/lunjs/split-cmd/blob/master/LICENSE)
+- [MIT](LICENSE)
