@@ -1,5 +1,5 @@
-const assert = require('assert');
-const { splitCmd } = require('./');
+import * as assert from 'assert';
+import { splitCmd } from './index.js';
 
 const cases = [
   ['', []],

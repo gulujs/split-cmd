@@ -2,8 +2,13 @@
   "name": "@lunjs/split-cmd",
   "version": "0.1.0",
   "description": "split a command into an array, like process.argv",
+  "type": "module",
   "main": "index.js",
   "typings": "index.d.ts",
+  "files": [
+    "index.js",
+    "index.d.ts"
+  ],
   "scripts": {
     "test": "node test.js"
   },
@@ -26,5 +31,8 @@
     "spawn",
     "process",
     "argv"
-  ]
+  ],
+  "engines": {
+    "node": ">=14.0.0"
+  }
 }

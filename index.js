@@ -1,5 +1,5 @@
 
-function splitCmd(str, options) {
+export function splitCmd(str, options) {
   options = options || {};
   const s = {
     argv: [],
@@ -294,7 +294,3 @@ function resetAndEatQuote(s, c, resetType, eatType) {
     s.arg += c;
   }
 }
-
-module.exports = {
-  splitCmd
-};

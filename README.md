@@ -10,8 +10,8 @@ npm install @lunjs/archy
 
 ## Usage
 
-```
-const { splitCmd } = require('@lunjs/split-cmd');
+```js
+import { splitCmd } from '@lunjs/split-cmd';
 
 const command = `git commit -m "hello \
 world!
