@@ -1,6 +1,6 @@
 {
   "name": "@lunjs/split-cmd",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "split a command into an array, like process.argv",
   "type": "module",
   "main": "index.js",
